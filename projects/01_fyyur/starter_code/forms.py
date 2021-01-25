@@ -20,7 +20,13 @@ class VenueForm(Form):
     name = StringField(
         'name', validators=[DataRequired()]
     )
+    description = StringField(
+        'description'
+    )
     city = StringField(
+        'city', validators=[DataRequired()]
+    )
+    webpage_link = StringField(
         'city', validators=[DataRequired()]
     )
     state = SelectField(
@@ -121,8 +127,14 @@ class ArtistForm(Form):
     name = StringField(
         'name', validators=[DataRequired()]
     )
+    webpage_link = StringField(
+        'webpage_link', validators=[DataRequired()]
+    )
     city = StringField(
         'city', validators=[DataRequired()]
+    )
+    description = StringField(
+        'description'
     )
     state = SelectField(
         'state', validators=[DataRequired()],
