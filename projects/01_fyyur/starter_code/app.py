@@ -56,6 +56,20 @@ class Venue(db.Model):
   description = db.Column(db.String(500), nullable = True)
   seeking_talent = db.Column(db.Boolean(),nullable = False, default = False)
   shows = db.relationship('Artist',secondary = 'Show')
+  def dictionary(self):
+    return {
+      'id': self.id,
+      'name': self.name,
+      'city': self.city,
+      'state': self.state,
+      'phone': self.phone,
+      'genres': self.genres.split(','),  # convert string to list
+      'image_link': self.image_link,
+      'facebook_link': self.facebook_link,
+      'webpage_link': self.webpage_link,
+      'seeking_talent': self.seeking_talent,
+      'seeking_description': self.description,
+      }
     #add shows (venue has many shows)
 class Artist(db.Model):
   __tablename__ = 'Artist'
@@ -71,6 +85,20 @@ class Artist(db.Model):
   description = db.Column(db.String(500), nullable = True)
   seeking_venue = db.Column(db.Boolean(),nullable = False, default = False)
   shows = db.relationship('Venue',secondary = 'Show')
+  def dictionary(self):
+    return {
+      'id': self.id,
+      'name': self.name,
+      'city': self.city,
+      'state': self.state,
+      'phone': self.phone,
+      'genres': self.genres.split(','),  # convert string to list
+      'image_link': self.image_link,
+      'facebook_link': self.facebook_link,
+      'webpage_link': self.webpage_link,
+      'seeking_venue': self.seeking_venue,
+      'seeking_description': self.description,
+      }
     #add shows (artist has many shows)
 
 
@@ -115,7 +143,7 @@ def venues():
   #       num_shows should be aggregated based on number of upcoming shows per venue.
   city_state = db.session.query(Venue.state,Venue.city).group_by(Venue.state,Venue.city).all() 
 
-  currentdate = datetime.now()
+  currentdate = datetime.today()
   data = []
   for g in city_state:
     res = {
@@ -254,8 +282,42 @@ def show_venue(venue_id):
     "past_shows_count": 1,
     "upcoming_shows_count": 1,
   }
+  venue=Venue.query.get(venue_id)
+  # db.session.query(Venue).filter((Venue.state == g[0]) & (Venue.city == g[1])).all()
+  today = datetime.today()
+  upcoming_shows = db.session.query(Show).filter((Show.venue_id ==venue.id) & (Show.start_time >= today)).all()
+  past_shows = db.session.query(Show).filter( (Show.venue_id == venue.id) & (Show.start_time < today ) ).all()
+  venue_dto = venue.dictionary()
   # data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
-  return render_template('pages/show_venue.html', venue=Venue.query.get(venue_id))
+  upcoming_shows_list = []
+  past_shows_list = []
+  for show in upcoming_shows:
+    artist = Artist.query.get(show.artist_id)
+    show = {
+      "artist_id":artist.id,
+      "artist_name": artist.name,
+      "artist_image_link":artist.image_link,
+      "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+    }
+    upcoming_shows_list.append(show)
+  for show in past_shows:
+    artist = Artist.query.get(show.artist_id)
+    show = {
+      "artist_id":artist.id,
+      "artist_name": artist.name,
+      "artist_image_link":artist.image_link,
+      "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+    }
+    past_shows_list.append(show)
+  NumOfUpcomingShows = db.session.query(Show).filter((Show.start_time >= today) & (Show.venue_id == venue.id)).count()
+  NumOfPastShows = db.session.query(Show).filter((Show.start_time < today) & (Show.venue_id == venue.id)).count()
+
+  venue_dto['upcoming_shows'] = upcoming_shows_list
+  venue_dto['past_shows'] = past_shows_list
+  venue_dto['upcoming_shows_count'] = NumOfUpcomingShows
+  venue_dto['past_shows_count'] = NumOfPastShows
+  print(venue_dto)
+  return render_template('pages/show_venue.html',venue = venue_dto)
 
 #  Create Venue
 #  ----------------------------------------------------------------
