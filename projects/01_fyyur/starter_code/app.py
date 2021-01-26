@@ -208,15 +208,27 @@ def search_venues():
     # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
     # seach for Hop should return "The Musical Hop".
     # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+    term =request.form.get('search_term', '').lower()
+    venues = Venue.query.filter(Venue.name.ilike(f'%{term}%')).all()
+    venues_response = []
+    today = datetime.today()
+    for v in venues:
+        upcoming_shows_count = db.session.query(Show).join(Venue).filter(Show.start_time > today).count()
+        venues_response.append({
+            "id": v.id,
+            "name": v.name,
+            "num_upcoming_shows": upcoming_shows_count
+        })
     response = {
-        "count": 1,
-        "data": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
+        "count": Venue.query.filter(Venue.name.ilike(f'%{term}%')).count(),
+        "data": venues_response
     }
-    return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+    # [{
+    #         "id": 2,
+    #         "name": "The Dueling Pianos Bar",
+    #         "num_upcoming_shows": 0,
+    #     }]
+    return render_template('pages/search_venues.html', results=response, search_term=term)
 
 
 @app.route('/venues/<int:venue_id>')
@@ -338,7 +350,6 @@ def show_venue(venue_id):
     venue_dto['past_shows'] = past_shows_list
     venue_dto['upcoming_shows_count'] = NumOfUpcomingShows
     venue_dto['past_shows_count'] = NumOfPastShows
-    print(venue_dto)
     return render_template('pages/show_venue.html', venue=venue_dto)
 
 #  Create Venue
@@ -406,16 +417,6 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
     # TODO: replace with real data returned from querying the database
-    data = [{
-        "id": 4,
-        "name": "Guns N Petals",
-    }, {
-        "id": 5,
-        "name": "Matt Quevedo",
-    }, {
-        "id": 6,
-        "name": "The Wild Sax Band",
-    }]
     return render_template('pages/artists.html', artists=Artist.query.all())
 
 
@@ -439,78 +440,6 @@ def search_artists():
 def show_artist(artist_id):
     # shows the venue page with the given venue_id
     # TODO: replace with real venue data from the venues table, using venue_id
-    # data1={
-    #   "id": 4,
-    #   "name": "Guns N Petals",
-    #   "genres": ["Rock n Roll"],
-    #   "city": "San Francisco",
-    #   "state": "CA",
-    #   "phone": "326-123-5000",
-    #   "website": "https://www.gunsnpetalsband.com",
-    #   "facebook_link": "https://www.facebook.com/GunsNPetals",
-    #   "seeking_venue": True,
-    #   "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    #   "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    #   "past_shows": [{
-    #     "venue_id": 1,
-    #     "venue_name": "The Musical Hop",
-    #     "venue_image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-    #     "start_time": "2019-05-21T21:30:00.000Z"
-    #   }],
-    #   "upcoming_shows": [],
-    #   "past_shows_count": 1,
-    #   "upcoming_shows_count": 0,
-    # }
-    # data2={
-    #   "id": 5,
-    #   "name": "Matt Quevedo",
-    #   "genres": ["Jazz"],
-    #   "city": "New York",
-    #   "state": "NY",
-    #   "phone": "300-400-5000",
-    #   "facebook_link": "https://www.facebook.com/mattquevedo923251523",
-    #   "seeking_venue": False,
-    #   "image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-    #   "past_shows": [{
-    #     "venue_id": 3,
-    #     "venue_name": "Park Square Live Music & Coffee",
-    #     "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-    #     "start_time": "2019-06-15T23:00:00.000Z"
-    #   }],
-    #   "upcoming_shows": [],
-    #   "past_shows_count": 1,
-    #   "upcoming_shows_count": 0,
-    # }
-    # data3={
-    #   "id": 6,
-    #   "name": "The Wild Sax Band",
-    #   "genres": ["Jazz", "Classical"],
-    #   "city": "San Francisco",
-    #   "state": "CA",
-    #   "phone": "432-325-5432",
-    #   "seeking_venue": False,
-    #   "image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    #   "past_shows": [],
-    #   "upcoming_shows": [{
-    #     "venue_id": 3,
-    #     "venue_name": "Park Square Live Music & Coffee",
-    #     "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-    #     "start_time": "2035-04-01T20:00:00.000Z"
-    #   }, {
-    #     "venue_id": 3,
-    #     "venue_name": "Park Square Live Music & Coffee",
-    #     "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-    #     "start_time": "2035-04-08T20:00:00.000Z"
-    #   }, {
-    #     "venue_id": 3,
-    #     "venue_name": "Park Square Live Music & Coffee",
-    #     "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-    #     "start_time": "2035-04-15T20:00:00.000Z"
-    #   }],
-    #   "past_shows_count": 0,
-    #   "upcoming_shows_count": 3,
-    # }
-    # data = Artist.query.get(artist_id)
     artist = Artist.query.get(artist_id)
     # db.session.query(Venue).filter((Venue.state == g[0]) & (Venue.city == g[1])).all()
     today = datetime.today()
@@ -522,23 +451,25 @@ def show_artist(artist_id):
     # data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
     upcoming_shows_list = []
     past_shows_list = []
-    for show in upcoming_shows:
-        venue = Venue.query.get(show.venue_id)
+    for s in upcoming_shows:
+        venue = Venue.query.get(s.venue_id)
         show = {
-            "venue_id": artist.id,
-            "venue_name": artist.name,
-            "venue_image_link": artist.image_link,
-            "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+            "venue_id": venue.id,
+            "venue_name": venue.name,
+            "venue_image_link": venue.image_link,
+            "start_time": s.start_time.strftime("%m/%d/%Y, %H:%M:%S")
         }
+        print(show)
         upcoming_shows_list.append(show)
-    for show in past_shows:
-        artist = Artist.query.get(show.artist_id)
+    for s in past_shows:
+        venue = Venue.query.get(s.venue_id)
         show = {
-            "artist_id": artist.id,
-            "artist_name": artist.name,
-            "artist_image_link": artist.image_link,
-            "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+            "venue_id": venue.id,
+            "venue_name": venue.name,
+            "venue_image_link": venue.image_link,
+            "start_time": s.start_time.strftime("%m/%d/%Y, %H:%M:%S")
         }
+        print(show)
         past_shows_list.append(show)
     NumOfUpcomingShows = db.session.query(Show).filter(
         (Show.start_time >= today) & (Show.artist_id == artist.id)).count()
@@ -549,8 +480,8 @@ def show_artist(artist_id):
     artist_dto['past_shows'] = past_shows_list
     artist_dto['upcoming_shows_count'] = NumOfUpcomingShows
     artist_dto['past_shows_count'] = NumOfPastShows
-    print(artist_dto)
     #data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
+    #   return jsonify(artist_dto)
     return render_template('pages/show_artist.html', artist=artist_dto)
 
 #  Update
@@ -677,42 +608,7 @@ def shows():
     # displays list of shows at /shows
     # TODO: replace with real venues data.
     #       num_shows should be aggregated based on number of upcoming shows per venue.
-    # data=[{
-    #   "venue_id": 1,
-    #   "venue_name": "The Musical Hop",
-    #   "artist_id": 4,
-    #   "artist_name": "Guns N Petals",
-    #   "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    #   "start_time": "2019-05-21T21:30:00.000Z"
-    # }, {
-    #   "venue_id": 3,
-    #   "venue_name": "Park Square Live Music & Coffee",
-    #   "artist_id": 5,
-    #   "artist_name": "Matt Quevedo",
-    #   "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-    #   "start_time": "2019-06-15T23:00:00.000Z"
-    # }, {
-    #   "venue_id": 3,
-    #   "venue_name": "Park Square Live Music & Coffee",
-    #   "artist_id": 6,
-    #   "artist_name": "The Wild Sax Band",
-    #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    #   "start_time": "2035-04-01T20:00:00.000Z"
-    # }, {
-    #   "venue_id": 3,
-    #   "venue_name": "Park Square Live Music & Coffee",
-    #   "artist_id": 6,
-    #   "artist_name": "The Wild Sax Band",
-    #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    #   "start_time": "2035-04-08T20:00:00.000Z"
-    # }, {
-    #   "venue_id": 3,
-    #   "venue_name": "Park Square Live Music & Coffee",
-    #   "artist_id": 6,
-    #   "artist_name": "The Wild Sax Band",
-    #   "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    #   "start_time": "2035-04-15T20:00:00.000Z"
-    # }]
+    
     shows = Show.query.all()
     shows_dtos = []
     for show in shows:
