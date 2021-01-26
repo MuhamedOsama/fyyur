@@ -71,6 +71,24 @@
 		{% endfor %}
 	</div>
 </section>
+<a href="/artists/{{ artist.id }}/edit" class="btn btn-default">Edit Artist</a>
+<button class="btn btn-danger delete">Delete Artist</button>
 
+<script>
+	const deleteButton = document.querySelector('.delete')
+	deleteButton.addEventListener('click', function(e){
+		const id = {{artist.id|safe}}
+		console.log(id) 
+		fetch(`/artists/${id}`, {
+                method: 'DELETE',
+            }).then(async r => {
+				const res = await r.json()
+				if(r.success = true)
+				window.location.replace('/')
+            }).catch(e => {
+                console.log(e)
+            })
+	})
+</script>
 {% endblock %}
 
